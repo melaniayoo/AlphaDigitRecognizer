@@ -31,14 +31,14 @@ else:
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     print("Min pixel value:", gray_image.min())
     print("Max pixel value:", gray_image.max())
-
-
-    ret, new_image = cv2.threshold(image,127, 255, cv2.THRESH_BINARY)
-    #plt.imshow(new_image, cmap='gray')
-    plot_image(image, new_image, "Original", "Image After Thresholding")
-  #  plt.show()
-
-
+    height, width = gray_image.shape[:2]
+    print(f"Image size: {width} x {height} pixels")
+    resized_image = cv2.resize(gray_image, (200, 200))
+    ret, new_image = cv2.threshold(resized_image,127, 255, cv2.THRESH_BINARY)
+    normalized_image = new_image / 255.0
+    #plt.imshow(normalized_image, cmap='gray')
+    plot_image(image, normalized_image, "Original", "Image After Thresholding")
+    #plt.show()
 
 '''
 from tensorflow.keras.models import Sequential
