@@ -10,8 +10,8 @@ The flowchart for the project is as follows:
 The directory structure meanwhile is:
 
 ## Credits
-- [Handwritten Text Recognition with TensorFlow repository by Harald Scheidl](link: https://github.com/githubharald/SimpleHTR): The description & control packages in the repository are used under the MIT license.
-- [Pradip Kushal Dantrao, Shweta Shahaji Shinde, Priti Milind Kamble &amp; Dr Kavita Joshi, “HANDWRITTEN CHARACTER RECOGNITION USING NEURAL NETWORK”, G. H .Raisoni Collage of Engineering & Management Pune, India, 2021.](https://www.oaijse.com/VolumeArticles/FullTextPDF/669_11.HANDWRITTEN_CHARACTER_RECOGNITION_USING_NEURAL_NETWORK_4585854.pdf)
+- [Handwritten Text Recognition with TensorFlow repository by Harald Scheidl](https://github.com/githubharald/SimpleHTR): The description & control packages in the repository are used under the MIT license.
+- [Research Paper:](https://www.oaijse.com/VolumeArticles/FullTextPDF/669_11.HANDWRITTEN_CHARACTER_RECOGNITION_USING_NEURAL_NETWORK_4585854.pdf) Pradip Kushal Dantrao, Shweta Shahaji Shinde, Priti Milind Kamble &amp; Dr Kavita Joshi, “HANDWRITTEN CHARACTER RECOGNITION USING NEURAL NETWORK”, G. H .Raisoni Collage of Engineering & Management Pune, India, 2021.
 
 ## Project Members
 [Melania Yoo](https://github.com/melaniayoo/) &amp; [Mehak Khan](https://github.com/MehakKhan05/)
