@@ -2,6 +2,7 @@ from main import load_data  # Or your data loader module
 from model import build_cnn_model  # Import the model architecture
 from tensorflow.keras.utils import to_categorical
 import numpy as np
+from tensorflow.image import resize
 
 # Load both datasets
 letters_data = load_data(
@@ -29,10 +30,6 @@ testing_labels_digits = np.array(testing_labels_digits) - 1
 training_images = np.concatenate((training_images_letters, training_images_digits), axis=0)
 training_labels = np.concatenate((training_labels_letters, training_labels_digits), axis=0)
 
-# Debugging shapes
-print("Shape of training_images:", training_images.shape)
-print("Shape of training_labels:", training_labels.shape)
-
 # Combine testing data
 testing_images = np.concatenate((testing_images_letters, testing_images_digits), axis=0)
 testing_labels = np.concatenate((testing_labels_letters, testing_labels_digits), axis=0)
@@ -41,27 +38,28 @@ testing_labels = np.concatenate((testing_labels_letters, testing_labels_digits),
 training_labels = training_labels.flatten()
 testing_labels = testing_labels.flatten()
 
-# Debugging shapes
-print("Shape of flattened training_labels:", training_labels.shape)
-print("Shape of flattened testing_labels:", testing_labels.shape)
-
 # Filter training data
 valid_train_indices = (training_labels <= 35)
-print("Shape of valid_train_indices:", valid_train_indices.shape)
-
 training_images = training_images[valid_train_indices]
 training_labels = training_labels[valid_train_indices]
 
 # Filter testing data
 valid_test_indices = (testing_labels <= 35)
-print("Shape of valid_test_indices:", valid_test_indices.shape)
-
 testing_images = testing_images[valid_test_indices]
 testing_labels = testing_labels[valid_test_indices]
 
-# Verify unique labels
-print("Filtered unique training labels:", np.unique(training_labels))
-print("Filtered unique testing labels:", np.unique(testing_labels))
+# Debugging shapes after filtering
+print("Shape of filtered training_images:", training_images.shape)
+print("Shape of filtered testing_images:", testing_images.shape)
+
+# **Place the resizing code here**
+# Resize images to 32x32 (for MobileNet compatibility)
+training_images = np.array([resize(img, (32, 32)).numpy() for img in training_images])
+testing_images = np.array([resize(img, (32, 32)).numpy() for img in testing_images])
+
+# Debugging shapes after resizing
+print("Shape of training_images after resizing:", training_images.shape)
+print("Shape of testing_images after resizing:", testing_images.shape)
 
 # One-hot encode labels
 num_classes = 36  # 10 digits + 26 letters
@@ -69,7 +67,7 @@ y_train = to_categorical(training_labels, num_classes)
 y_test = to_categorical(testing_labels, num_classes)
 
 # Build the model
-input_shape = (28, 28, 1)
+input_shape = (32, 32, 3)  # Updated input shape to match resized images
 model = build_cnn_model(input_shape, num_classes)
 
 # Compile the model

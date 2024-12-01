@@ -4,7 +4,7 @@ from PIL import ImageGrab, Image
 import numpy as np
 
 # Load the trained model
-model = load_model("cnn_emnist_model.h5")
+model = load_model("cnn_emnist_alphanumeric_model.keras")
 
 # Mapping for EMNIST letters (assuming 'A' starts from 0 in your mapping)
 def label_to_char(label):
