@@ -1,11 +1,11 @@
 # train.py
-from data_loader import load_data
+from main import load_data
 from model import build_cnn_model
 from tensorflow.keras.utils import to_categorical
 
 # Load data
 (training_images, training_labels), (testing_images, testing_labels), num_classes = load_data(
-    "C:/path/to/emnist-letters.mat", 28, 28
+    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28
 )
 
 # Convert labels to one-hot encoding
@@ -20,4 +20,4 @@ model = build_cnn_model(input_shape, num_classes)
 model.fit(training_images, y_train, batch_size=128, epochs=10, validation_data=(testing_images, y_test))
 
 # Save the model
-model.save("cnn_emnist_model.h5")
+model.save("cnn_emnist_model.keras")
