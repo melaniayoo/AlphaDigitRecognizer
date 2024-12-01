@@ -2,7 +2,9 @@ import os
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
+from scipy.io import loadmat
+import pickle
+'''
 def plot_image(image1, image2, title1, title2):
     # Create a figure with 1 row and 2 columns for side-by-side images
     plt.figure(figsize=(10, 5))
@@ -39,32 +41,71 @@ else:
     #plt.imshow(normalized_image, cmap='gray')
     plot_image(image, normalized_image, "Original", "Image After Thresholding")
     #plt.show()
-
 '''
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+def load_data(mat_file_path, width=28, height=28, max_=None, verbose=True):
+    # Local functions
+    def rotate(img):
+        # Used to rotate images (for some reason they are transposed on read-in)
+        flipped = np.fliplr(img)
+        return np.rot90(flipped)
 
-model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
-    MaxPooling2D(pool_size=(2, 2)),
-    Flatten(),
-    Dense(64, activation='relu'),
-    Dense(1, activation='sigmoid')  # Single neuron for binary classification
-])
+    def display(img, threshold=0.5):
+        # Debugging only
+        render = ''
+        for row in img:
+            for col in row:
+                if col > threshold:
+                    render += '@'
+                else:
+                    render += '.'
+            render += '\n'
+        return render
 
-model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-'''
-'''def load_data(data_dir, labels_file):
-    images = []
-    labels = []
-    with open(labels_file, 'r') as f:
-        for line in f:
-            filename, label = line.strip().split('\t')
-            img_path = os.path.join(data_dir, filename)
-            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-            img = cv2.resize(img, (128, 32))  # Resize to model input dimensions
-            img = img / 255.0  # Normalize
-            images.append(img)
-            labels.append(label)
-    return np.array(images), labels
-'''
+    # Load convoluted list structure form loadmat
+    mat = loadmat(mat_file_path)
+
+    # Load char mapping
+    mapping = {kv[0]:kv[1:][0] for kv in mat['dataset'][0][0][2]}
+    pickle.dump(mapping, open('bin/mapping.p', 'wb' ))
+
+    # Load training data
+    if max_ == None:
+        max_ = len(mat['dataset'][0][0][0][0][0][0])
+    training_images = mat['dataset'][0][0][0][0][0][0][:max_].reshape(max_, height, width, 1)
+    training_labels = mat['dataset'][0][0][0][0][0][1][:max_]
+
+    # Load testing data
+    if max_ == None:
+        max_ = len(mat['dataset'][0][0][1][0][0][0])
+    else:
+        max_ = int(max_ / 6)
+    testing_images = mat['dataset'][0][0][1][0][0][0][:max_].reshape(max_, height, width, 1)
+    testing_labels = mat['dataset'][0][0][1][0][0][1][:max_]
+
+    # Reshape training data to be valid
+    if verbose == True: _len = len(training_images)
+    for i in range(len(training_images)):
+        if verbose == True: print('%d/%d (%.2lf%%)' % (i + 1, _len, ((i + 1)/_len) * 100), end='\r')
+        training_images[i] = rotate(training_images[i])
+    if verbose == True: print('')
+
+    # Reshape testing data to be valid
+    if verbose == True: _len = len(testing_images)
+    for i in range(len(testing_images)):
+        if verbose == True: print('%d/%d (%.2lf%%)' % (i + 1, _len, ((i + 1)/_len) * 100), end='\r')
+        testing_images[i] = rotate(testing_images[i])
+    if verbose == True: print('')
+
+    # Convert type to float32
+    training_images = training_images.astype('float32')
+    testing_images = testing_images.astype('float32')
+
+    # Normalize to prevent issues with model
+    training_images /= 255
+    testing_images /= 255
+
+    nb_classes = len(mapping)
+
+    return ((training_images, training_labels), (testing_images, testing_labels), mapping, nb_classes)
+
+load_data("/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True)
