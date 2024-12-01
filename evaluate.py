@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Load data
 (training_data, testing_data, mapping, num_classes) = load_data(
-    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True
+    r"/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True
 )
 
 # Extract testing images and labels
