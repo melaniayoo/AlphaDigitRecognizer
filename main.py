@@ -4,44 +4,44 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import pickle
-'''
-def plot_image(image1, image2, title1, title2):
-    # Create a figure with 1 row and 2 columns for side-by-side images
-    plt.figure(figsize=(10, 5))
 
-    # Plot the first image
-    plt.subplot(1, 2, 1)  # 1 row, 2 columns, first image
-    plt.imshow(image1, cmap='gray')
-    plt.title(title1)
-    plt.axis('off')  # Turn off axis for better visualization
+# def plot_image(image1, image2, title1, title2):
+#     # Create a figure with 1 row and 2 columns for side-by-side images
+#     plt.figure(figsize=(10, 5))
 
-    # Plot the second image
-    plt.subplot(1, 2, 2)  # 1 row, 2 columns, second image
-    plt.imshow(image2, cmap='gray')
-    plt.title(title2)
-    plt.axis('off')  # Turn off axis for better visualization
+#     # Plot the first image
+#     plt.subplot(1, 2, 1)  # 1 row, 2 columns, first image
+#     plt.imshow(image1, cmap='gray')
+#     plt.title(title1)
+#     plt.axis('off')  # Turn off axis for better visualization
 
-    # Display the images
-    plt.show()
+#     # Plot the second image
+#     plt.subplot(1, 2, 2)  # 1 row, 2 columns, second image
+#     plt.imshow(image2, cmap='gray')
+#     plt.title(title2)
+#     plt.axis('off')  # Turn off axis for better visualization
 
-# Load the image (replace 'image_path' with your image file path)
-image = cv2.imread(r"C:\Users\mehak\HandwritingRecognition\Database\train\A.jpeg")
-if image is None:
-    print("Error: Image not found!")
-else:
-    # 1. Convert to grayscale
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    print("Min pixel value:", gray_image.min())
-    print("Max pixel value:", gray_image.max())
-    height, width = gray_image.shape[:2]
-    print(f"Image size: {width} x {height} pixels")
-    resized_image = cv2.resize(gray_image, (200, 200))
-    ret, new_image = cv2.threshold(resized_image,127, 255, cv2.THRESH_BINARY)
-    normalized_image = new_image / 255.0
-    #plt.imshow(normalized_image, cmap='gray')
-    plot_image(image, normalized_image, "Original", "Image After Thresholding")
-    #plt.show()
-'''
+#     # Display the images
+#     plt.show()
+
+# # Load the image (replace 'image_path' with your image file path)
+# image = cv2.imread(r"C:\Users\mehak\HandwritingRecognition\Database\train\A.jpeg")
+# if image is None:
+#     print("Error: Image not found!")
+# else:
+#     # 1. Convert to grayscale
+#     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     print("Min pixel value:", gray_image.min())
+#     print("Max pixel value:", gray_image.max())
+#     height, width = gray_image.shape[:2]
+#     print(f"Image size: {width} x {height} pixels")
+#     resized_image = cv2.resize(gray_image, (200, 200))
+#     ret, new_image = cv2.threshold(resized_image,127, 255, cv2.THRESH_BINARY)
+#     normalized_image = new_image / 255.0
+#     #plt.imshow(normalized_image, cmap='gray')
+#     plot_image(image, normalized_image, "Original", "Image After Thresholding")
+#     #plt.show()
+
 def load_data(mat_file_path, width=28, height=28, max_=None, verbose=True):
     # Local functions
     def rotate(img):
@@ -108,4 +108,5 @@ def load_data(mat_file_path, width=28, height=28, max_=None, verbose=True):
 
     return ((training_images, training_labels), (testing_images, testing_labels), mapping, nb_classes)
 
-load_data("/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True)
+load_data(r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True)
+

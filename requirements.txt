@@ -18,3 +18,4 @@ six
 tensorboard
 termcolor
 Werkzeug
+scipy
