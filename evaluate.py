@@ -1,12 +1,13 @@
 # evaluate.py
 from tensorflow.keras.models import load_model
-from data_loader import load_data
+from tensorflow.keras.utils import to_categorical  # Import to_categorical
+from main import load_data  # Assuming load_data is in main.py
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Load data
-(_, _), (testing_images, testing_labels), num_classes = load_data(
-    "C:/path/to/emnist-letters.mat", 28, 28
+(testing_images, testing_labels), num_classes = load_data(
+    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True
 )
 
 # Load the trained model
@@ -28,3 +29,4 @@ plt.imshow(image.squeeze(), cmap='gray')
 plt.title(f"Predicted: {predicted_label}, Actual: {testing_labels[index]}")
 plt.axis('off')
 plt.show()
+

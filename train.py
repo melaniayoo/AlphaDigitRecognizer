@@ -1,5 +1,6 @@
 # train.py
 from main import load_data
+from main import load_data
 from model import build_cnn_model
 from tensorflow.keras.utils import to_categorical
 
@@ -7,6 +8,9 @@ from tensorflow.keras.utils import to_categorical
 (training_images, training_labels), (testing_images, testing_labels), num_classes = load_data(
     "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28
 )
+
+training_images, training_labels = training_data
+testing_images, testing_labels = testing_data
 
 # Convert labels to one-hot encoding
 y_train = to_categorical(training_labels, num_classes)
