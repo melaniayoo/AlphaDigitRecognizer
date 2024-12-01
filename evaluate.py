@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 testing_images, testing_labels = testing_data
 
 # Load the trained model
-model = load_model("cnn_emnist_model.h5")
+model = load_model("cnn_emnist_model.keras")
 
 # Evaluate on test data
 y_test = to_categorical(testing_labels - 1, num_classes)

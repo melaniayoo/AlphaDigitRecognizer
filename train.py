@@ -4,12 +4,12 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 # Load data
-(training_images, training_labels), (testing_images, testing_labels),num_classes = load_data(
+(training_images, training_labels), (testing_images, testing_labels),mapping,num_classes = load_data(
     "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28
 )
 
-training_images, training_labels = training_data
-testing_images, testing_labels = testing_data
+#training_images, training_labels = training_data
+#testing_images, testing_labels = testing_data
 
 # Ensure labels are in the correct range (convert 1-indexed to 0-indexed if necessary)
 training_labels = np.array(training_labels) - 1
@@ -39,4 +39,4 @@ print(f"Test Loss: {test_loss}")
 print(f"Test Accuracy: {test_accuracy}")
 
 # Save the trained model
-model.save("cnn_emnist_model.h5")
+model.save("cnn_emnist_model.keras")

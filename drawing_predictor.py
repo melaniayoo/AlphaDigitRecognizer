@@ -2,9 +2,10 @@ import tkinter as tk
 from tensorflow.keras.models import load_model
 from PIL import ImageGrab, Image
 import numpy as np
+import time
 
 # Load the trained model
-model = load_model("cnn_emnist_model.h5")
+model = load_model("cnn_emnist_model.keras")
 
 # Mapping for EMNIST letters (assuming 'A' starts from 0 in your mapping)
 def label_to_char(label):
@@ -22,21 +23,24 @@ def preprocess_image(canvas):
     # Resize to 28x28, the input size for your model
     image = image.resize((28, 28), Image.Resampling.LANCZOS)
     image_array = np.array(image)
+    # Invert colors (black background, white foreground)
+    image_array = 255 - image_array
     # Normalize and reshape for the model input
     image_array = image_array / 255.0  # Normalize pixel values
     image_array = image_array.reshape(1, 28, 28, 1)  # Add batch and channel dimensions
     return image_array
 
-# Function to make predictions
 def predict_character(canvas):
     # Preprocess the drawn image
     image = preprocess_image(canvas)
-    # Predict the label
+    # Predict the probabilities for each label
     prediction = model.predict(image)
     predicted_label = np.argmax(prediction)
+    confidence = np.max(prediction) * 100  # Confidence percentage
+
     # Map label to character
     predicted_char = label_to_char(predicted_label)
-    result_label.config(text=f"Predicted: {predicted_char}")
+    result_label.config(text=f"Predicted: {predicted_char} (Confidence: {confidence:.2f}%)")
 
 # Function to clear the canvas
 def clear_canvas(canvas):
