@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
 import pickle
+from sklearn.model_selection import train_test_split
 '''
 def plot_image(image1, image2, title1, title2):
     # Create a figure with 1 row and 2 columns for side-by-side images
@@ -109,3 +110,4 @@ def load_data(mat_file_path, width=28, height=28, max_=None, verbose=True):
     return ((training_images, training_labels), (testing_images, testing_labels), mapping, nb_classes)
 
 load_data("/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True)
+
