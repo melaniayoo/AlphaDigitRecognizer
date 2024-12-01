@@ -108,5 +108,5 @@ def load_data(mat_file_path, width=28, height=28, max_=None, verbose=True):
 
     return ((training_images, training_labels), (testing_images, testing_labels), mapping, nb_classes)
 
-load_data(r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True)
+load_data(r"/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True)
 

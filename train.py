@@ -4,8 +4,8 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 
 # Load data
-training_data, testing_data, mapping, num_classes = load_data(
-    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True
+(training_images, training_labels), (testing_images, testing_labels), num_classes = load_data(
+    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28
 )
 
 training_images, training_labels = training_data
