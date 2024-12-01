@@ -4,18 +4,12 @@ from tensorflow.keras.utils import to_categorical
 import numpy as np
 from tensorflow.image import resize
 
-<<<<<<< HEAD
-# Load data
-(training_images, training_labels), (testing_images, testing_labels),mapping,num_classes = load_data(
-    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28
-=======
 # Load both datasets
 letters_data = load_data(
-    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", 28, 28, None, True
->>>>>>> 6f8745f7865d4aacaeaccb7821d64406c9c98948
+    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-digits.mat", 28, 28, None, True
 )
 digits_data = load_data(
-    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-digits.mat", 28, 28, None, True
+    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True
 )
 
 # Extract training and testing data for letters
@@ -49,10 +43,7 @@ valid_train_indices = (training_labels <= 35)
 training_images = training_images[valid_train_indices]
 training_labels = training_labels[valid_train_indices]
 
-<<<<<<< HEAD
-#training_images, training_labels = training_data
-#testing_images, testing_labels = testing_data
-=======
+
 # Filter testing data
 valid_test_indices = (testing_labels <= 35)
 testing_images = testing_images[valid_test_indices]
@@ -92,8 +83,4 @@ print(f"Test Loss: {test_loss}")
 print(f"Test Accuracy: {test_accuracy}")
 
 # Save the trained model
-<<<<<<< HEAD
-model.save("cnn_emnist_model.keras")
-=======
 model.save("cnn_emnist_alphanumeric_model.keras")
->>>>>>> 6f8745f7865d4aacaeaccb7821d64406c9c98948
