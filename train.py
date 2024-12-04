@@ -3,84 +3,60 @@ from model import build_cnn_model  # Import the model architecture
 from tensorflow.keras.utils import to_categorical
 import numpy as np
 from tensorflow.image import resize
+from tensorflow.keras.utils import Sequence
+
+class DataGenerator(Sequence):
+    def __init__(self, images, labels, batch_size, num_classes):
+        self.images = images
+        self.labels = labels
+        self.batch_size = batch_size
+        self.num_classes = num_classes
+
+    def __len__(self):
+        return int(np.ceil(len(self.images) / self.batch_size))
+
+    def __getitem__(self, index):
+        batch_images = self.images[index * self.batch_size:(index + 1) * self.batch_size]
+        batch_labels = self.labels[index * self.batch_size:(index + 1) * self.batch_size]
+        return batch_images, to_categorical(batch_labels, self.num_classes)
+
 
 # Load both datasets
 letters_data = load_data(
-    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-digits.mat", 28, 28, None, True
+    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-letters.mat", target_size=(150, 150)
 )
 digits_data = load_data(
-    "/Users/OWNER/SideProjects/HandwritingRecognition/Database/train/emnist-letters.mat", 28, 28, None, True
+    r"C:\Users\mehak\HandwritingRecognition\Database\train\emnist-digits.mat", target_size=(150, 150)
 )
 
-# Extract training and testing data for letters
+# Combine datasets
 (training_images_letters, training_labels_letters) = letters_data[0]
 (testing_images_letters, testing_labels_letters) = letters_data[1]
-
-# Extract training and testing data for digits
 (training_images_digits, training_labels_digits) = digits_data[0]
 (testing_images_digits, testing_labels_digits) = digits_data[1]
 
-# Adjust labels to ensure no overlap
-training_labels_letters = np.array(training_labels_letters) + 9  # Offset letters to start from 10
-testing_labels_letters = np.array(testing_labels_letters) + 9
-training_labels_digits = np.array(training_labels_digits) - 1  # Ensure digits are 0-9
-testing_labels_digits = np.array(testing_labels_digits) - 1
-
-# Combine training data
 training_images = np.concatenate((training_images_letters, training_images_digits), axis=0)
 training_labels = np.concatenate((training_labels_letters, training_labels_digits), axis=0)
-
-# Combine testing data
 testing_images = np.concatenate((testing_images_letters, testing_images_digits), axis=0)
 testing_labels = np.concatenate((testing_labels_letters, testing_labels_digits), axis=0)
 
-# Flatten labels to ensure they are 1D arrays
-training_labels = training_labels.flatten()
-testing_labels = testing_labels.flatten()
+# Adjust labels to avoid overlap
+training_labels[:len(training_labels_letters)] += 9
+testing_labels[:len(testing_labels_letters)] += 9
 
-# Filter training data
-valid_train_indices = (training_labels <= 35)
-training_images = training_images[valid_train_indices]
-training_labels = training_labels[valid_train_indices]
+# One-hot encoding is handled in DataGenerator
+batch_size = 64
+num_classes = 36
+training_generator = DataGenerator(training_images, training_labels, batch_size, num_classes)
+testing_generator = DataGenerator(testing_images, testing_labels, batch_size, num_classes)
 
-
-# Filter testing data
-valid_test_indices = (testing_labels <= 35)
-testing_images = testing_images[valid_test_indices]
-testing_labels = testing_labels[valid_test_indices]
-
-# Debugging shapes after filtering
-print("Shape of filtered training_images:", training_images.shape)
-print("Shape of filtered testing_images:", testing_images.shape)
-
-# **Place the resizing code here**
-# Resize images to 32x32 (for MobileNet compatibility)
-training_images = np.array([resize(img, (32, 32)).numpy() for img in training_images])
-testing_images = np.array([resize(img, (32, 32)).numpy() for img in testing_images])
-
-# Debugging shapes after resizing
-print("Shape of training_images after resizing:", training_images.shape)
-print("Shape of testing_images after resizing:", testing_images.shape)
-
-# One-hot encode labels
-num_classes = 36  # 10 digits + 26 letters
-y_train = to_categorical(training_labels, num_classes)
-y_test = to_categorical(testing_labels, num_classes)
-
-# Build the model
-input_shape = (32, 32, 3)  # Updated input shape to match resized images
+# Build the InceptionV3-based model
+input_shape = (150, 150, 3)
 model = build_cnn_model(input_shape, num_classes)
 
-# Compile the model
+# Compile and train the model
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.fit(training_generator, validation_data=testing_generator, epochs=10)
 
-# Train the model
-model.fit(training_images, y_train, batch_size=128, epochs=10, validation_data=(testing_images, y_test))
-
-# Evaluate and print results
-test_loss, test_accuracy = model.evaluate(testing_images, y_test, verbose=0)
-print(f"Test Loss: {test_loss}")
-print(f"Test Accuracy: {test_accuracy}")
-
-# Save the trained model
-model.save("cnn_emnist_alphanumeric_model.keras")
+# Save the model
+model.save("inceptionv3_emnist_alphanumeric_model.keras")
