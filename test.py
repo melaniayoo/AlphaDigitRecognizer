@@ -4,30 +4,26 @@
 # !conda install -y torchvision
 
 # PyTorch Library
-import torch 
+import torch
 # PyTorch Neural Network
 import torch.nn as nn
 # Allows us to transform data
 import torchvision.transforms as transforms
-# Allows us to get the digit dataset
+# Allows us to download the dataset
 import torchvision.datasets as dsets
-# Creating graphs
+# Used to graph data and loss curves
 import matplotlib.pylab as plt
 # Allows us to use arrays to manipulate and store data
 import numpy as np
-import torch.onnx as onnx
-from onnx2keras import onnx_to_keras
-import onnx
-import tensorflow as tf
-import torchvision.transforms as transforms
 
+def show_data(data_sample):
+    plt.imshow(data_sample[0].numpy().reshape(IMAGE_SIZE, IMAGE_SIZE), cmap='gray')
+    plt.title('y = '+ str(data_sample[1]))
 # upload EMNIST AND MNIST DATA SETS
-
 IMAGE_SIZE = 16
 
 # First the image is resized then converted to a tensor
 composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), transforms.ToTensor()])
-
 # Load EMNIST dataset
 train_dataset = dsets.EMNIST(
     root='./data', 
@@ -48,8 +44,6 @@ validation_dataset = dsets.EMNIST(
 # MNIST dataset
 train_dataset = dsets.MNIST(root='./data', train=True, download=True, transform=composed)
 validation_dataset = dsets.MNIST(root='./data', train=False, download=True, transform=composed)
-
-#Build cnn 
 
 class CNN(nn.Module):
     
@@ -95,10 +89,17 @@ class CNN(nn.Module):
         out1 = self.maxpool2(a2)
         out = out.view(out.size(0),-1)
         return z1, a1, z2, a2, out1,out
-
-# Create the model object using CNN class
-
+    
 model = CNN(out_1=16, out_2=32)
+# We create a criterion which will measure loss
+criterion = nn.CrossEntropyLoss()
+learning_rate = 0.1
+# Create an optimizer that updates model parameters using the learning rate and gradient
+optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate)
+# Create a Data Loader for the training data with a batch size of 100 
+train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=100)
+# Create a Data Loader for the validation data with a batch size of 5000 
+validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=5000)
 
 # Train the model
 
@@ -109,16 +110,6 @@ cost_list=[]
 accuracy_list=[]
 # Size of the validation dataset
 N_test=len(validation_dataset)
-
-# We create a criterion which will measure loss
-criterion = nn.CrossEntropyLoss()
-learning_rate = 0.1
-# Create an optimizer that updates model parameters using the learning rate and gradient
-optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate)
-# Create a Data Loader for the training data with a batch size of 100 
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=100)
-# Create a Data Loader for the validation data with a batch size of 5000 
-validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=5000)
 
 # Model Training Function
 def train_model(n_epochs):
@@ -159,38 +150,4 @@ def train_model(n_epochs):
         accuracy_list.append(accuracy)
      
 train_model(n_epochs)
-
-# Define the path for the ONNX file
-onnx_path = "cnn_model.onnx"
-
-# Create dummy input to match the input size of the model (batch_size=1, channels=1, height=28, width=28 for MNIST/EMNIST)
-dummy_input = torch.randn(1, 1, 28, 28)
-
-# Export the PyTorch model to ONNX format
-torch.onnx.export(
-    model,                    # The trained PyTorch model
-    dummy_input,              # Dummy input for tracing
-    onnx_path,                # Path to save the ONNX model
-    export_params=True,       # Export trained parameters
-    opset_version=11,         # ONNX version
-    input_names=['input'],    # Input layer name
-    output_names=['output'],  # Output layer name
-    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # Dynamic batch size
-)
-
-print(f"Model exported to {onnx_path}")
-
-# Load the ONNX model
-onnx_model = onnx.load(onnx_path)
-
-# Convert ONNX model to Keras model
-keras_model = onnx_to_keras(onnx_model, ['input'])
-
-# Save the Keras model to an H5 file
-keras_model.save("cnn_model.h5")
-
-print("Model successfully converted to Keras and saved as cnn_model.h5")
-
-
-
 
