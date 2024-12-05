@@ -1,15 +1,27 @@
 import tkinter as tk
-from tensorflow.keras.models import load_model
+import torch
 from PIL import ImageGrab, Image
 import numpy as np
-import time
 
-# Load the trained model
-model = load_model("cnn_emnist_alphanumeric_model.keras")
+# Load the TorchScript models
+emnist_model = torch.jit.load("emnist_model.pt")
+mnist_model = torch.jit.load("mnist_model.pt")
 
-# Mapping for EMNIST letters (assuming 'A' starts from 0 in your mapping)
+# Set both models to evaluation mode
+emnist_model.eval()
+mnist_model.eval()
+
+# Variable to keep track of the selected model
+current_model = "EMNIST"
+
+# Function to map EMNIST/MNIST labels to characters
 def label_to_char(label):
-    return chr(label + ord('A'))
+    if current_model == "EMNIST":
+        # EMNIST mapping: A-Z starts from 0
+        return chr(label + ord('A')) if label >= 10 else str(label)  # Map digits directly, letters afterward
+    else:
+        # MNIST mapping: 0-9 digits
+        return str(label)
 
 # Function to preprocess the canvas image
 def preprocess_image(canvas):
@@ -20,23 +32,30 @@ def preprocess_image(canvas):
     x1 = x + canvas.winfo_width()
     y1 = y + canvas.winfo_height()
     image = ImageGrab.grab().crop((x, y, x1, y1)).convert("L")
-    # Resize to 28x28, the input size for your model
-    image = image.resize((28, 28), Image.Resampling.LANCZOS)
+    # Resize to 28x28, the input size for both models
+    image = image.resize((16, 16), Image.Resampling.LANCZOS)
     image_array = np.array(image)
     # Invert colors (black background, white foreground)
     image_array = 255 - image_array
     # Normalize and reshape for the model input
     image_array = image_array / 255.0  # Normalize pixel values
-    image_array = image_array.reshape(1, 28, 28, 1)  # Add batch and channel dimensions
-    return image_array
+    image_tensor = torch.tensor(image_array, dtype=torch.float32).unsqueeze(0).unsqueeze(0)  # Add batch and channel dimensions
+    return image_tensor
 
+# Function to predict the character
 def predict_character(canvas):
+    global current_model
     # Preprocess the drawn image
     image = preprocess_image(canvas)
+
+    # Select the appropriate model
+    model = emnist_model if current_model == "EMNIST" else mnist_model
+
     # Predict the probabilities for each label
-    prediction = model.predict(image)
-    predicted_label = np.argmax(prediction)
-    confidence = np.max(prediction) * 100  # Confidence percentage
+    with torch.no_grad():
+        prediction = model(image)
+        predicted_label = torch.argmax(prediction).item()
+        confidence = torch.softmax(prediction, dim=1).max().item() * 100  # Confidence percentage
 
     # Map label to character
     predicted_char = label_to_char(predicted_label)
@@ -45,6 +64,12 @@ def predict_character(canvas):
 # Function to clear the canvas
 def clear_canvas(canvas):
     canvas.delete("all")
+
+# Function to switch models
+def switch_model(selected_model):
+    global current_model
+    current_model = selected_model
+    model_label.config(text=f"Current Model: {current_model}")
 
 # Create the Tkinter GUI
 root = tk.Tk()
@@ -57,6 +82,20 @@ canvas.pack()
 # Add result display
 result_label = tk.Label(root, text="Predicted: ", font=("Helvetica", 16))
 result_label.pack()
+
+# Add a label to display the current model
+model_label = tk.Label(root, text=f"Current Model: {current_model}", font=("Helvetica", 14))
+model_label.pack()
+
+# Add buttons for model selection
+model_frame = tk.Frame(root)
+model_frame.pack()
+
+emnist_button = tk.Button(model_frame, text="Use EMNIST", command=lambda: switch_model("EMNIST"))
+emnist_button.pack(side="left", padx=10)
+
+mnist_button = tk.Button(model_frame, text="Use MNIST", command=lambda: switch_model("MNIST"))
+mnist_button.pack(side="right", padx=10)
 
 # Add buttons for predicting and clearing the canvas
 button_frame = tk.Frame(root)

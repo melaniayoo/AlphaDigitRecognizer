@@ -30,27 +30,25 @@ train_dataset = dsets.MNIST(root='./data', train=True, download=True, transform=
 validation_dataset = dsets.MNIST(root='./data', train=False, download=True, transform=composed)
 
 class CNN(nn.Module):
-    
-    # Contructor
-    def __init__(self, out_1=16, out_2=32):
+    def __init__(self, out_1=16, out_2=32, num_classes=47):
         super(CNN, self).__init__()
-        # The reason we start with 1 channel is because we have a single black and white image
-        # Channel Width after this layer is 16
         self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
-        # Channel Wifth after this layer is 8
-        self.maxpool1=nn.MaxPool2d(kernel_size=2)
-        
-        # Channel Width after this layer is 8
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.cnn2 = nn.Conv2d(in_channels=out_1, out_channels=out_2, kernel_size=5, stride=1, padding=2)
-        # Channel Width after this layer is 4
-        self.maxpool2=nn.MaxPool2d(kernel_size=2)
-        # In total we have out_2 (32) channels which are each 4 * 4 in size based on the width calculation above. Channels are squares.
-        # The output is a value for each class
-        self.fc1 = nn.Linear(out_2 * 4 * 4, 10)
-    
-    # Prediction
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+
+        # Calculate the flattened size dynamically
+        dummy_input = torch.randn(1, 1, 16, 16)  # Adjust input size if needed
+        x = self.cnn1(dummy_input)
+        x = self.maxpool1(torch.relu(x))
+        x = self.cnn2(x)
+        x = self.maxpool2(torch.relu(x))
+        self.flattened_size = x.view(-1).size(0)
+
+        # Fully connected layer
+        self.fc1 = nn.Linear(self.flattened_size, num_classes)
+
     def forward(self, x):
-        # Puts the X value through each cnn, relu, and pooling layer and it is flattened for input into the fully connected layer
         x = self.cnn1(x)
         x = torch.relu(x)
         x = self.maxpool1(x)
@@ -61,9 +59,9 @@ class CNN(nn.Module):
         x = self.fc1(x)
         return x
     
-    # Outputs result of each stage of the CNN, relu, and pooling layers
+    # Outputs result of each stage of the CNN, ReLU, and pooling layers
     def activations(self, x):
-        # Outputs activation this is not necessary
+        # Outputs activation (this is not necessary for training)
         z1 = self.cnn1(x)
         a1 = torch.relu(z1)
         out = self.maxpool1(a1)
@@ -71,8 +69,8 @@ class CNN(nn.Module):
         z2 = self.cnn2(out)
         a2 = torch.relu(z2)
         out1 = self.maxpool2(a2)
-        out = out.view(out.size(0),-1)
-        return z1, a1, z2, a2, out1,out
+        out = out.view(out.size(0), -1)
+        return z1, a1, z2, a2, out1, out
     
 model = CNN(out_1=16, out_2=32)
 # We create a criterion which will measure loss
@@ -134,4 +132,9 @@ def train_model(n_epochs):
         accuracy_list.append(accuracy)
      
 train_model(n_epochs)
+
+scripted_model = torch.jit.script(model)  # Convert the model to TorchScript
+scripted_model.save('mnist_model.pt')    # Save the scripted model
+print("Model saved as mnist_model.pt")
+
 

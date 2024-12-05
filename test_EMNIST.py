@@ -39,27 +39,25 @@ validation_dataset = dsets.EMNIST(
 )
 
 class CNN(nn.Module):
-    
-    # Constructor
     def __init__(self, out_1=16, out_2=32, num_classes=47):
         super(CNN, self).__init__()
-        # The reason we start with 1 channel is because we have a single black and white image
-        # Channel Width after this layer is 16
         self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
-        # Channel Width after this layer is 8
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        
-        # Channel Width after this layer is 8
         self.cnn2 = nn.Conv2d(in_channels=out_1, out_channels=out_2, kernel_size=5, stride=1, padding=2)
-        # Channel Width after this layer is 4
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
-        
-        # Adjust output features to match number of classes in EMNIST (47 classes)
-        self.fc1 = nn.Linear(out_2 * 4 * 4, num_classes)  # Adjust for EMNIST (47 classes)
-    
-    # Prediction
+
+        # Calculate the flattened size dynamically
+        dummy_input = torch.randn(1, 1, 16, 16)  # Adjust input size if needed
+        x = self.cnn1(dummy_input)
+        x = self.maxpool1(torch.relu(x))
+        x = self.cnn2(x)
+        x = self.maxpool2(torch.relu(x))
+        self.flattened_size = x.view(-1).size(0)
+
+        # Fully connected layer
+        self.fc1 = nn.Linear(self.flattened_size, num_classes)
+
     def forward(self, x):
-        # Puts the X value through each CNN, ReLU, and pooling layer, and it is flattened for input into the fully connected layer
         x = self.cnn1(x)
         x = torch.relu(x)
         x = self.maxpool1(x)
@@ -82,6 +80,7 @@ class CNN(nn.Module):
         out1 = self.maxpool2(a2)
         out = out.view(out.size(0), -1)
         return z1, a1, z2, a2, out1, out
+
 
 # Initialize the CNN model for EMNIST (47 classes)
 model = CNN(out_1=16, out_2=32, num_classes=47)
@@ -151,3 +150,8 @@ def train_model(n_epochs):
         accuracy_list.append(accuracy)
      
 train_model(n_epochs)
+
+scripted_model = torch.jit.script(model)  # Convert the model to TorchScript
+scripted_model.save('emnist_model.pt')    # Save the scripted model
+print("Model saved as emnist_model.pt")
+
