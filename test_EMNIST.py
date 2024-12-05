@@ -38,11 +38,11 @@ validation_dataset = dsets.EMNIST(
     transform=composed
 )
 
-class CNN(nn.Module):
+class CNN_EMNIST(nn.Module):
     
     # Constructor
     def __init__(self, out_1=16, out_2=32, num_classes=47):
-        super(CNN, self).__init__()
+        super(CNN_EMNIST, self).__init__()
         # The reason we start with 1 channel is because we have a single black and white image
         # Channel Width after this layer is 16
         self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
@@ -84,7 +84,7 @@ class CNN(nn.Module):
         return z1, a1, z2, a2, out1, out
 
 # Initialize the CNN model for EMNIST (47 classes)
-model = CNN(out_1=16, out_2=32, num_classes=47)
+model = CNN_EMNIST(out_1=16, out_2=32, num_classes=47)
 
 # Create a criterion which will measure loss
 criterion = nn.CrossEntropyLoss()
@@ -151,3 +151,4 @@ def train_model(n_epochs):
         accuracy_list.append(accuracy)
      
 train_model(n_epochs)
+torch.save(model.state_dict(), 'emnist_model.pth')

@@ -1,79 +1,75 @@
-import tkinter as tk
-from tensorflow.keras.models import load_model
-from PIL import ImageGrab, Image
+import torch
+import torchvision.transforms as transforms
+from PIL import Image, ImageDraw
 import numpy as np
-import time
+import tkinter as tk
+from tkinter import messagebox
+import torch.nn as nn
 
-# Load the trained model
-model = load_model("cnn_emnist_alphanumeric_model.keras")
+# Define image size
+IMAGE_SIZE = 16  # Use 16x16 for EMNIST or 28x28 for MNIST
 
-# Mapping for EMNIST letters (assuming 'A' starts from 0 in your mapping)
-def label_to_char(label):
-    return chr(label + ord('A'))
+# Define model (Use the EMNIST model, can be overridden with a parameter)
+class CNN(nn.Module):
+    def __init__(self, out_1=16, out_2=32, num_classes=47):  # Adjust num_classes based on dataset
+        super(CNN, self).__init__()
+        self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        self.cnn2 = nn.Conv2d(in_channels=out_1, out_channels=out_2, kernel_size=5, padding=2)
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        self.fc1 = nn.Linear(out_2 * 4 * 4, num_classes)
+        
+    def forward(self, x):
+        x = self.cnn1(x)
+        x = torch.relu(x)
+        x = self.maxpool1(x)
+        x = self.cnn2(x)
+        x = torch.relu(x)
+        x = self.maxpool2(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        return x
 
-# Function to preprocess the canvas image
-def preprocess_image(canvas):
-    canvas.update()
-    # Grab the canvas content as an image
-    x = canvas.winfo_rootx()
-    y = canvas.winfo_rooty()
-    x1 = x + canvas.winfo_width()
-    y1 = y + canvas.winfo_height()
-    image = ImageGrab.grab().crop((x, y, x1, y1)).convert("L")
-    # Resize to 28x28, the input size for your model
-    image = image.resize((28, 28), Image.Resampling.LANCZOS)
-    image_array = np.array(image)
-    # Invert colors (black background, white foreground)
-    image_array = 255 - image_array
-    # Normalize and reshape for the model input
-    image_array = image_array / 255.0  # Normalize pixel values
-    image_array = image_array.reshape(1, 28, 28, 1)  # Add batch and channel dimensions
-    return image_array
+# Tkinter GUI for drawing
+class DrawingApp:
+    def __init__(self, master, model):
+        self.master = master
+        self.model = model  # Use the passed model
+        
+        self.canvas = tk.Canvas(master, width=IMAGE_SIZE*20, height=IMAGE_SIZE*20, bg='white')
+        self.canvas.pack()
+        
+        self.button_clear = tk.Button(master, text="Clear", command=self.clear_canvas)
+        self.button_clear.pack()
 
-def predict_character(canvas):
-    # Preprocess the drawn image
-    image = preprocess_image(canvas)
-    # Predict the probabilities for each label
-    prediction = model.predict(image)
-    predicted_label = np.argmax(prediction)
-    confidence = np.max(prediction) * 100  # Confidence percentage
+        self.button_predict = tk.Button(master, text="Predict", command=self.predict)
+        self.button_predict.pack()
 
-    # Map label to character
-    predicted_char = label_to_char(predicted_label)
-    result_label.config(text=f"Predicted: {predicted_char} (Confidence: {confidence:.2f}%)")
+        self.canvas.bind("<B1-Motion>", self.paint)
+        self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
 
-# Function to clear the canvas
-def clear_canvas(canvas):
-    canvas.delete("all")
+    def clear_canvas(self):
+        self.canvas.delete("all")
+        self.image_data.fill(0)
 
-# Create the Tkinter GUI
-root = tk.Tk()
-root.title("Handwritten Character Recognition")
+    def paint(self, event):
+        x1, y1 = (event.x // 20) * 20, (event.y // 20) * 20
+        x2, y2 = x1 + 20, y1 + 20
+        self.canvas.create_rectangle(x1, y1, x2, y2, fill="black", width=0)
+        self.image_data[y1//20:y2//20, x1//20:x2//20] = 255  # Mark pixels as drawn
 
-# Create a canvas for drawing
-canvas = tk.Canvas(root, width=200, height=200, bg="white")
-canvas.pack()
+    def predict(self):
+        # Convert the numpy image array to a PIL image
+        image = Image.fromarray(self.image_data)
+        composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), transforms.ToTensor()])
+        image = composed(image)  # Apply transformations
 
-# Add result display
-result_label = tk.Label(root, text="Predicted: ", font=("Helvetica", 16))
-result_label.pack()
+        # Add a batch dimension and send the image through the model
+        image = image.unsqueeze(0)
+        with torch.no_grad():
+            output = self.model(image)
+            _, predicted_class = torch.max(output.data, 1)
 
-# Add buttons for predicting and clearing the canvas
-button_frame = tk.Frame(root)
-button_frame.pack()
+        # Show prediction result
+        messagebox.showinfo("Prediction", f"Predicted Class: {predicted_class.item()}")
 
-predict_button = tk.Button(button_frame, text="Predict", command=lambda: predict_character(canvas))
-predict_button.pack(side="left", padx=10)
-
-clear_button = tk.Button(button_frame, text="Clear", command=lambda: clear_canvas(canvas))
-clear_button.pack(side="right", padx=10)
-
-# Make the canvas drawable
-def draw(event):
-    x, y = event.x, event.y
-    canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="black", width=10)
-
-canvas.bind("<B1-Motion>", draw)
-
-# Start the Tkinter main loop
-root.mainloop()
