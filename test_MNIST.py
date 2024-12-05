@@ -32,7 +32,7 @@ validation_dataset = dsets.MNIST(root='./data', train=False, download=True, tran
 class CNN_MNIST(nn.Module):
     
     # Contructor
-    def __init__(self, out_1=16, out_2=32):
+    def __init__(self, out_1=16, out_2=32, num_classes=10):
         super(CNN_MNIST, self).__init__()
         # The reason we start with 1 channel is because we have a single black and white image
         # Channel Width after this layer is 16

@@ -2,17 +2,16 @@ import torch
 from drawing_predictor import DrawingApp
 import tkinter as tk
 import sys
-from torchvision import datasets
 from test_EMNIST import CNN_EMNIST  # Import CNN for EMNIST
 from test_MNIST import CNN_MNIST  # Import CNN for MNIST
-
+from augmentation import CNN_EMNIST_ROTATE  # Import CNN for EMNIST with rotation
 
 # Function to load the model
 def load_model(dataset_choice):
     if dataset_choice == 'EMNIST':
         # Load the EMNIST model
-        model = CNN_EMNIST(out_1=16, out_2=32, num_classes=47)  # For EMNIST, there are 47 classes
-        model.load_state_dict(torch.load('emnist_model.pth'))  # Load EMNIST model weights
+        model = CNN_EMNIST_ROTATE(out_1=16, out_2=32, num_classes=26)  # For EMNIST, there are 26 classes
+        model.load_state_dict(torch.load('emnist_letters_rotated_checkpoint.pth'))  # Load EMNIST model weights
     elif dataset_choice == 'MNIST':
         # Load the MNIST model
         model = CNN_MNIST(out_1=16, out_2=32, num_classes=10)  # For MNIST, there are 10 classes
@@ -32,7 +31,7 @@ def run_drawing_predictor(dataset_choice):
     root.title(f"{dataset_choice} Drawing Predictor")
     
     # Modify the DrawingApp class to use the correct model
-    app = DrawingApp(root, model=model)
+    app = DrawingApp(root, model=model, dataset_choice=dataset_choice)
     
     # Run the Tkinter event loop
     root.mainloop()

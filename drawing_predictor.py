@@ -1,122 +1,86 @@
 import torch
 import torchvision.transforms as transforms
-from PIL import Image, ImageDraw
+from PIL import Image
 import numpy as np
 import tkinter as tk
-import torch
-from PIL import ImageGrab, Image
-import numpy as np
+from tkinter import messagebox
+import torch.nn as nn
 
-# Load the TorchScript models
-emnist_model = torch.jit.load("emnist_model.pt")
-mnist_model = torch.jit.load("mnist_model.pt")
+# Define image size
+IMAGE_SIZE = 16  # Use 16x16 for EMNIST or 28x28 for MNIST
 
-# Set both models to evaluation mode
-emnist_model.eval()
-mnist_model.eval()
+# Define model (Use the EMNIST model, can be overridden with a parameter)
+class CNN(nn.Module):
+    def __init__(self, out_1=16, out_2=32, num_classes=26):  # Adjust num_classes based on dataset
+        super(CNN, self).__init__()
+        self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        self.cnn2 = nn.Conv2d(in_channels=out_1, out_channels=out_2, kernel_size=5, padding=2)
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        self.fc1 = nn.Linear(out_2 * 4 * 4, num_classes)
+        
+    def forward(self, x):
+        x = self.cnn1(x)
+        x = torch.relu(x)
+        x = self.maxpool1(x)
+        x = self.cnn2(x)
+        x = torch.relu(x)
+        x = self.maxpool2(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        return x
 
-# Variable to keep track of the selected model
-current_model = "EMNIST"
+# Tkinter GUI for drawing
+class DrawingApp:
+    def __init__(self, master, model, dataset_choice):
+        self.master = master
+        self.model = model  # Use the passed model
+        self.dataset_choice = dataset_choice  # Track dataset choice (EMNIST/MNIST)
 
-# Function to map EMNIST/MNIST labels to characters
-def label_to_char(label):
-    if current_model == "EMNIST":
-        # EMNIST mapping: A-Z starts from 0
-        return chr(label + ord('A')) if label >= 10 else str(label)  # Map digits directly, letters afterward
-    else:
-        # MNIST mapping: 0-9 digits
-        return str(label)
+        self.canvas = tk.Canvas(master, width=IMAGE_SIZE*20, height=IMAGE_SIZE*20, bg='white')
+        self.canvas.pack()
+        
+        self.button_clear = tk.Button(master, text="Clear", command=self.clear_canvas)
+        self.button_clear.pack()
 
-# Function to preprocess the canvas image
-def preprocess_image(canvas):
-    canvas.update()
-    # Grab the canvas content as an image
-    x = canvas.winfo_rootx()
-    y = canvas.winfo_rooty()
-    x1 = x + canvas.winfo_width()
-    y1 = y + canvas.winfo_height()
-    image = ImageGrab.grab().crop((x, y, x1, y1)).convert("L")
-    # Resize to 28x28, the input size for both models
-    image = image.resize((16, 16), Image.Resampling.LANCZOS)
-    image_array = np.array(image)
-    # Invert colors (black background, white foreground)
-    image_array = 255 - image_array
-    # Normalize and reshape for the model input
-    image_array = image_array / 255.0  # Normalize pixel values
-    image_tensor = torch.tensor(image_array, dtype=torch.float32).unsqueeze(0).unsqueeze(0)  # Add batch and channel dimensions
-    return image_tensor
+        self.button_predict = tk.Button(master, text="Predict", command=self.predict)
+        self.button_predict.pack()
 
-# Function to predict the character
-def predict_character(canvas):
-    global current_model
-    # Preprocess the drawn image
-    image = preprocess_image(canvas)
+        self.canvas.bind("<B1-Motion>", self.paint)
+        self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
 
-    # Select the appropriate model
-    model = emnist_model if current_model == "EMNIST" else mnist_model
+    def clear_canvas(self):
+        self.canvas.delete("all")
+        self.image_data.fill(0)
 
-    # Predict the probabilities for each label
-    with torch.no_grad():
-        prediction = model(image)
-        predicted_label = torch.argmax(prediction).item()
-        confidence = torch.softmax(prediction, dim=1).max().item() * 100  # Confidence percentage
+    def paint(self, event):
+        x1, y1 = (event.x // 20) * 20, (event.y // 20) * 20
+        x2, y2 = x1 + 20, y1 + 20
+        self.canvas.create_rectangle(x1, y1, x2, y2, fill="black", width=0)
+        self.image_data[y1//20:y2//20, x1//20:x2//20] = 255  # Mark pixels as drawn
 
-    # Map label to character
-    predicted_char = label_to_char(predicted_label)
-    result_label.config(text=f"Predicted: {predicted_char} (Confidence: {confidence:.2f}%)")
+    def label_to_char(self, label):
+        if self.dataset_choice == 'EMNIST':
+            return chr(label + ord('A'))  # Map 0–25 to A–Z
+        elif self.dataset_choice == 'MNIST':
+            return str(label)  # Map 0–9 to digits
+        else:
+            return str(label)
 
-# Function to clear the canvas
-def clear_canvas(canvas):
-    canvas.delete("all")
+    def predict(self):
+        # Convert the numpy image array to a PIL image
+        image = Image.fromarray(self.image_data)
+        composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), transforms.ToTensor()])
+        image = composed(image)  # Apply transformations
 
-# Function to switch models
-def switch_model(selected_model):
-    global current_model
-    current_model = selected_model
-    model_label.config(text=f"Current Model: {current_model}")
+        # Add a batch dimension and send the image through the model
+        image = image.unsqueeze(0)
+        with torch.no_grad():
+            output = self.model(image)
+            _, predicted_class = torch.max(output.data, 1)
 
-# Create the Tkinter GUI
-root = tk.Tk()
-root.title("Handwritten Character Recognition")
-
-# Create a canvas for drawing
-canvas = tk.Canvas(root, width=200, height=200, bg="white")
-canvas.pack()
-
-# Add result display
-result_label = tk.Label(root, text="Predicted: ", font=("Helvetica", 16))
-result_label.pack()
-
-# Add a label to display the current model
-model_label = tk.Label(root, text=f"Current Model: {current_model}", font=("Helvetica", 14))
-model_label.pack()
-
-# Add buttons for model selection
-model_frame = tk.Frame(root)
-model_frame.pack()
-
-emnist_button = tk.Button(model_frame, text="Use EMNIST", command=lambda: switch_model("EMNIST"))
-emnist_button.pack(side="left", padx=10)
-
-mnist_button = tk.Button(model_frame, text="Use MNIST", command=lambda: switch_model("MNIST"))
-mnist_button.pack(side="right", padx=10)
-
-# Add buttons for predicting and clearing the canvas
-button_frame = tk.Frame(root)
-button_frame.pack()
-
-predict_button = tk.Button(button_frame, text="Predict", command=lambda: predict_character(canvas))
-predict_button.pack(side="left", padx=10)
-
-clear_button = tk.Button(button_frame, text="Clear", command=lambda: clear_canvas(canvas))
-clear_button.pack(side="right", padx=10)
-
-# Make the canvas drawable
-def draw(event):
-    x, y = event.x, event.y
-    canvas.create_oval(x - 5, y - 5, x + 5, y + 5, fill="black", width=10)
-
-canvas.bind("<B1-Motion>", draw)
-
-# Start the Tkinter main loop
-root.mainloop()
+        # Map label to character
+        predicted_char = self.label_to_char(predicted_class.item())
+        
+        # Show prediction result
+        messagebox.showinfo("Prediction", f"Predicted: {predicted_char}")
