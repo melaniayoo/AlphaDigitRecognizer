@@ -22,7 +22,7 @@ def load_model(dataset_choice):
     model.eval()  # Set the model to evaluation mode
     return model
 
-# Function to initialize the application with the selected model
+# Function to initialize the application with the EMNIST model
 def run_drawing_predictor(dataset_choice):
     model = load_model(dataset_choice)
     
@@ -35,6 +35,23 @@ def run_drawing_predictor(dataset_choice):
     
     # Run the Tkinter event loop
     root.mainloop()
+
+# Function to predict class (letter) from the image
+def predict_class(model, image_tensor, dataset_choice):
+    """Given a model and an image tensor, predict the class and return the corresponding letter."""
+    with torch.no_grad():
+        output = model(image_tensor)
+    # Get the predicted class index (the class with the max value)
+    _, predicted_class_idx = torch.max(output, 1)
+    
+    # Map the class index to the corresponding letter based on the dataset
+    if dataset_choice == 'EMNIST':
+        predicted_class_letter = emnist_letters_mapping[predicted_class_idx.item()]
+    else:
+        # For MNIST, there is no need for mapping as it only has digits (0-9)
+        predicted_class_letter = str(predicted_class_idx.item())
+    
+    return predicted_class_letter
 
 if __name__ == "__main__":
     # Take the dataset choice as a command line argument

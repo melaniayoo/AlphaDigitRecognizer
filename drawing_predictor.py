@@ -7,7 +7,7 @@ from tkinter import messagebox
 import torch.nn as nn
 
 # Define image size
-IMAGE_SIZE = 16  # Use 16x16 for EMNIST or 28x28 for MNIST
+IMAGE_SIZE = 16  
 
 # Define model (Use the EMNIST model, can be overridden with a parameter)
 class CNN(nn.Module):
@@ -46,12 +46,16 @@ class DrawingApp:
         self.button_predict = tk.Button(master, text="Predict", command=self.predict)
         self.button_predict.pack()
 
+        self.prediction_label = tk.Label(master, text="Prediction: None", font=("Helvetica", 16))
+        self.prediction_label.pack()
+
         self.canvas.bind("<B1-Motion>", self.paint)
         self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
 
     def clear_canvas(self):
         self.canvas.delete("all")
         self.image_data.fill(0)
+        self.prediction_label.config(text="Prediction: None")
 
     def paint(self, event):
         x1, y1 = (event.x // 20) * 20, (event.y // 20) * 20

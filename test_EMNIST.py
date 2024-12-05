@@ -1,15 +1,8 @@
-# PyTorch Library
 import torch
-# PyTorch Neural Network
 import torch.nn as nn
-# Allows us to transform data
 import torchvision.transforms as transforms
-# Allows us to download the dataset
 import torchvision.datasets as dsets
-# Used to graph data and loss curves
-import matplotlib.pylab as plt
-# Allows us to use arrays to manipulate and store data
-import numpy as np
+import matplotlib.pyplot as plt
 
 # Function to display sample data
 def show_data(data_sample):
@@ -37,6 +30,7 @@ train_dataset = dsets.EMNIST(
 
 validation_dataset = dsets.EMNIST(
     root='./data', 
+    split='letters', 
     split='letters', 
     train=False, 
     download=True, 
@@ -84,8 +78,7 @@ class CNN_EMNIST(nn.Module):
         x = self.cnn1(x)
         x = torch.relu(x)
         x = self.maxpool1(x)
-        x = self.cnn2(x)
-        x = torch.relu(x)
+        x = torch.relu(self.cnn2(x))
         x = self.maxpool2(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
