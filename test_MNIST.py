@@ -29,9 +29,13 @@ composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), tran
 train_dataset = dsets.MNIST(root='./data', train=True, download=True, transform=composed)
 validation_dataset = dsets.MNIST(root='./data', train=False, download=True, transform=composed)
 
-class CNN(nn.Module):
-    def __init__(self, out_1=16, out_2=32, num_classes=47):
-        super(CNN, self).__init__()
+class CNN_MNIST(nn.Module):
+    
+    # Contructor
+    def __init__(self, out_1=16, out_2=32):
+        super(CNN_MNIST, self).__init__()
+        # The reason we start with 1 channel is because we have a single black and white image
+        # Channel Width after this layer is 16
         self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.cnn2 = nn.Conv2d(in_channels=out_1, out_channels=out_2, kernel_size=5, stride=1, padding=2)
@@ -72,7 +76,7 @@ class CNN(nn.Module):
         out = out.view(out.size(0), -1)
         return z1, a1, z2, a2, out1, out
     
-model = CNN(out_1=16, out_2=32)
+model = CNN_MNIST(out_1=16, out_2=32)
 # We create a criterion which will measure loss
 criterion = nn.CrossEntropyLoss()
 learning_rate = 0.1
@@ -132,9 +136,4 @@ def train_model(n_epochs):
         accuracy_list.append(accuracy)
      
 train_model(n_epochs)
-
-scripted_model = torch.jit.script(model)  # Convert the model to TorchScript
-scripted_model.save('mnist_model.pt')    # Save the scripted model
-print("Model saved as mnist_model.pt")
-
-
+torch.save(model.state_dict(), 'mnist_model.pth')

@@ -1,3 +1,7 @@
+import torch
+import torchvision.transforms as transforms
+from PIL import Image, ImageDraw
+import numpy as np
 import tkinter as tk
 import torch
 from PIL import ImageGrab, Image
