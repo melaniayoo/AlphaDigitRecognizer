@@ -30,7 +30,6 @@ train_dataset = dsets.MNIST(root='./data', train=True, download=True, transform=
 validation_dataset = dsets.MNIST(root='./data', train=False, download=True, transform=composed)
 
 class CNN_MNIST(nn.Module):
-    
     # Contructor
     def __init__(self, out_1=16, out_2=32, num_classes=10):
         super(CNN_MNIST, self).__init__()
@@ -134,6 +133,7 @@ def train_model(n_epochs):
         # Calcualtes accuracy and saves it
         accuracy = correct / N_test
         accuracy_list.append(accuracy)
+        print(f"Epoch {epoch + 1}/{n_epochs}, Loss: {COST:.4f}, Accuracy: {accuracy:.4f}")
      
 train_model(n_epochs)
-torch.save(model.state_dict(), 'mnist_model.pth')
+torch.save(model.state_dict(), 'Models/mnist_model.pth')

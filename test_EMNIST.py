@@ -129,4 +129,4 @@ def train_model(n_epochs):
 
 # Train and Save Model
 train_model(n_epochs)
-torch.save(model.state_dict(), 'emnist_letters_model_improved.pth')
+torch.save(model.state_dict(), 'Models/emnist_letters_model.pth')
