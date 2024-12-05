@@ -7,7 +7,7 @@ from tkinter import messagebox
 import torch.nn as nn
 
 # Define image size
-IMAGE_SIZE = 16  # Use 16x16 for EMNIST or 28x28 for MNIST
+IMAGE_SIZE = 16  
 
 # Define model (Use the EMNIST model, can be overridden with a parameter)
 class CNN(nn.Module):
@@ -32,10 +32,11 @@ class CNN(nn.Module):
 
 # Tkinter GUI for drawing
 class DrawingApp:
-    def __init__(self, master, model, dataset_choice):
+    def __init__(self, master, model, dataset_choice, class_mapping):
         self.master = master
         self.model = model  # Use the passed model
         self.dataset_choice = dataset_choice
+        self.class_mapping = class_mapping
         
         self.canvas = tk.Canvas(master, width=IMAGE_SIZE*20, height=IMAGE_SIZE*20, bg='white')
         self.canvas.pack()
@@ -46,19 +47,16 @@ class DrawingApp:
         self.button_predict = tk.Button(master, text="Predict", command=self.predict)
         self.button_predict.pack()
 
+        self.prediction_label = tk.Label(master, text="Prediction: None", font=("Helvetica", 16))
+        self.prediction_label.pack()
+
         self.canvas.bind("<B1-Motion>", self.paint)
         self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
-    
-    def predict_drawing(self, image_tensor):
-        # Predict the class (letter or number)
-        predicted_class = predict_class(self.model, image_tensor, self.dataset_choice)
-        print(f"Predicted class: {predicted_class}")
-        # Update GUI with predicted class
-        self.prediction_label.config(text=f"Prediction: {predicted_class}")
 
     def clear_canvas(self):
         self.canvas.delete("all")
         self.image_data.fill(0)
+        self.prediction_label.config(text="Prediction: None")
 
     def paint(self, event):
         x1, y1 = (event.x // 20) * 20, (event.y // 20) * 20
@@ -77,7 +75,8 @@ class DrawingApp:
         with torch.no_grad():
             output = self.model(image)
             _, predicted_class = torch.max(output.data, 1)
-
+        predicted_letter = self.class_mapping[predicted_class.item()]
+       
         # Show prediction result
-        messagebox.showinfo("Prediction", f"Predicted Class: {predicted_class.item()}")
-
+        self.prediction_label.config(text=f"Prediction: {predicted_letter}")
+        messagebox.showinfo("Prediction", f"Predicted Letter: {predicted_letter}")

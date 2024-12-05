@@ -6,21 +6,18 @@ from torchvision import datasets
 from test_EMNIST import CNN_EMNIST  # Import CNN for EMNIST
 from test_MNIST import CNN_MNIST  # Import CNN for MNIST
 
-# Mapping for EMNIST Balanced split (class index to character)
-emnist_class_mapping = {
-    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
-    10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: 'I', 19: 'J',
-    20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: 'O', 25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T',
-    30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z', 36: 'a', 37: 'b', 38: 'c', 39: 'd',
-    40: 'e', 41: 'f', 42: 'g', 43: 'h', 44: 'i', 45: 'j', 46: 'k'
+emnist_letters_mapping = {
+    0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H', 8: 'I', 9: 'J',
+    10: 'K', 11: 'L', 12: 'M', 13: 'N', 14: 'O', 15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T',
+    20: 'U', 21: 'V', 22: 'W', 23: 'X', 24: 'Y', 25: 'Z'
 }
 
 # Function to load the model
 def load_model(dataset_choice):
     if dataset_choice == 'EMNIST':
         # Load the EMNIST model
-        model = CNN_EMNIST(out_1=16, out_2=32, num_classes=47)  # For EMNIST, there are 47 classes
-        model.load_state_dict(torch.load('emnist_model.pth'))  # Load EMNIST model weights
+        model = CNN_EMNIST(out_1=16, out_2=32, num_classes=26)  # For EMNIST, there are 26 classes
+        model.load_state_dict(torch.load('emnist_letters_model.pth'))  # Load EMNIST model weights
     elif dataset_choice == 'MNIST':
         # Load the MNIST model
         model = CNN_MNIST(out_1=16, out_2=32, num_classes=10)  # For MNIST, there are 10 classes
@@ -31,17 +28,18 @@ def load_model(dataset_choice):
     model.eval()  # Set the model to evaluation mode
     return model
 
-# Function to initialize the application with the selected model
+# Function to initialize the application with the EMNIST model
 def run_drawing_predictor(dataset_choice):
     model = load_model(dataset_choice)
     
     # Initialize the Tkinter window and application
     root = tk.Tk()
     root.title(f"{dataset_choice} Drawing Predictor")
-    
-    # Modify the DrawingApp class to use the correct model
-    app = DrawingApp(root, model=model, dataset_choice=dataset_choice)
-    
+
+    # Pass the model and dataset information to the drawing app
+    class_mapping = emnist_letters_mapping if dataset_choice == "EMNIST" else None
+    app = DrawingApp(root, model=model, dataset_choice=dataset_choice, class_mapping=class_mapping)
+
     # Run the Tkinter event loop
     root.mainloop()
 
@@ -55,7 +53,7 @@ def predict_class(model, image_tensor, dataset_choice):
     
     # Map the class index to the corresponding letter based on the dataset
     if dataset_choice == 'EMNIST':
-        predicted_class_letter = EMNIST_CLASSES[predicted_class_idx.item()]
+        predicted_class_letter = emnist_letters_mapping[predicted_class_idx.item()]
     else:
         # For MNIST, there is no need for mapping as it only has digits (0-9)
         predicted_class_letter = str(predicted_class_idx.item())
