@@ -11,7 +11,7 @@ IMAGE_SIZE = 16
 
 # Define model (Use the EMNIST model, can be overridden with a parameter)
 class CNN(nn.Module):
-    def __init__(self, out_1=16, out_2=32, num_classes=26):  # Adjust num_classes based on dataset
+    def __init__(self, out_1=16, out_2=32, num_classes=26):
         super(CNN, self).__init__()
         self.cnn1 = nn.Conv2d(in_channels=1, out_channels=out_1, kernel_size=5, padding=2)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
@@ -34,8 +34,8 @@ class CNN(nn.Module):
 class DrawingApp:
     def __init__(self, master, model, dataset_choice):
         self.master = master
-        self.model = model  # Use the passed model
-        self.dataset_choice = dataset_choice  # Track dataset choice (EMNIST/MNIST)
+        self.model = model
+        self.dataset_choice = dataset_choice
 
         self.canvas = tk.Canvas(master, width=IMAGE_SIZE*20, height=IMAGE_SIZE*20, bg='white')
         self.canvas.pack()
@@ -50,41 +50,64 @@ class DrawingApp:
         self.prediction_label.pack()
 
         self.canvas.bind("<B1-Motion>", self.paint)
-        self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
+        self.canvas.bind("<ButtonRelease-1>", self.reset_last_position)
+        self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)
 
     def clear_canvas(self):
         self.canvas.delete("all")
         self.image_data.fill(0)
         self.prediction_label.config(text="Prediction: None")
+        self.last_x, self.last_y = None, None  # Reset last mouse position
+
+    def reset_last_position(self, event):
+        self.last_x, self.last_y = None, None
 
     def paint(self, event):
-        x1, y1 = (event.x // 20) * 20, (event.y // 20) * 20
-        x2, y2 = x1 + 20, y1 + 20
-        self.canvas.create_rectangle(x1, y1, x2, y2, fill="black", width=0)
-        self.image_data[y1//20:y2//20, x1//20:x2//20] = 255  # Mark pixels as drawn
+    # Check if there is a previous mouse position
+        if hasattr(self, 'last_x') and self.last_x is not None:
+            # Draw a smooth line from the last position to the current position
+            self.canvas.create_line(
+                self.last_x, self.last_y, event.x, event.y,
+                fill="black", width=5, capstyle=tk.ROUND, smooth=True
+            )
+
+            # Update the corresponding pixels in image_data
+            x1, y1 = self.last_x // 20, self.last_y // 20
+            x2, y2 = event.x // 20, event.y // 20
+            self.image_data[min(y1, y2):max(y1, y2)+1, min(x1, x2):max(x1, x2)+1] = 255
+
+        # Update the last mouse position to the current one
+        self.last_x, self.last_y = event.x, event.y
+
 
     def label_to_char(self, label):
         if self.dataset_choice == 'EMNIST':
-            return chr(label + ord('A'))  # Map 0–25 to A–Z
+            return chr(label + ord('A'))
         elif self.dataset_choice == 'MNIST':
-            return str(label)  # Map 0–9 to digits
-        else:
             return str(label)
+        else:
+            raise ValueError(f"Unsupported dataset choice: {self.dataset_choice}")
 
     def predict(self):
-        # Convert the numpy image array to a PIL image
-        image = Image.fromarray(self.image_data)
-        composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), transforms.ToTensor()])
-        image = composed(image)  # Apply transformations
+        if self.model is None:
+            messagebox.showerror("Error", "Model not loaded. Please check your configuration.")
+            return
 
-        # Add a batch dimension and send the image through the model
-        image = image.unsqueeze(0)
+        self.prediction_label.config(text="Processing...")
+        self.master.update()
+
+        image = Image.fromarray(self.image_data)
+        composed = transforms.Compose([
+            transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+        image = composed(image).unsqueeze(0)
+
         with torch.no_grad():
             output = self.model(image)
             _, predicted_class = torch.max(output.data, 1)
 
-        # Map label to character
         predicted_char = self.label_to_char(predicted_class.item())
-        
-        # Show prediction result
+        self.prediction_label.config(text=f"Prediction: {predicted_char}")
         messagebox.showinfo("Prediction", f"Predicted: {predicted_char}")
