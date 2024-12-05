@@ -32,9 +32,10 @@ class CNN(nn.Module):
 
 # Tkinter GUI for drawing
 class DrawingApp:
-    def __init__(self, master, model):
+    def __init__(self, master, model, dataset_choice):
         self.master = master
         self.model = model  # Use the passed model
+        self.dataset_choice = dataset_choice
         
         self.canvas = tk.Canvas(master, width=IMAGE_SIZE*20, height=IMAGE_SIZE*20, bg='white')
         self.canvas.pack()
@@ -47,6 +48,13 @@ class DrawingApp:
 
         self.canvas.bind("<B1-Motion>", self.paint)
         self.image_data = np.zeros((IMAGE_SIZE, IMAGE_SIZE), dtype=np.uint8)  # Initialize empty image data
+    
+    def predict_drawing(self, image_tensor):
+        # Predict the class (letter or number)
+        predicted_class = predict_class(self.model, image_tensor, self.dataset_choice)
+        print(f"Predicted class: {predicted_class}")
+        # Update GUI with predicted class
+        self.prediction_label.config(text=f"Prediction: {predicted_class}")
 
     def clear_canvas(self):
         self.canvas.delete("all")

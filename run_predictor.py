@@ -6,6 +6,14 @@ from torchvision import datasets
 from test_EMNIST import CNN_EMNIST  # Import CNN for EMNIST
 from test_MNIST import CNN_MNIST  # Import CNN for MNIST
 
+# Mapping for EMNIST Balanced split (class index to character)
+emnist_class_mapping = {
+    0: '0', 1: '1', 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9',
+    10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F', 16: 'G', 17: 'H', 18: 'I', 19: 'J',
+    20: 'K', 21: 'L', 22: 'M', 23: 'N', 24: 'O', 25: 'P', 26: 'Q', 27: 'R', 28: 'S', 29: 'T',
+    30: 'U', 31: 'V', 32: 'W', 33: 'X', 34: 'Y', 35: 'Z', 36: 'a', 37: 'b', 38: 'c', 39: 'd',
+    40: 'e', 41: 'f', 42: 'g', 43: 'h', 44: 'i', 45: 'j', 46: 'k'
+}
 
 # Function to load the model
 def load_model(dataset_choice):
@@ -32,10 +40,27 @@ def run_drawing_predictor(dataset_choice):
     root.title(f"{dataset_choice} Drawing Predictor")
     
     # Modify the DrawingApp class to use the correct model
-    app = DrawingApp(root, model=model)
+    app = DrawingApp(root, model=model, dataset_choice=dataset_choice)
     
     # Run the Tkinter event loop
     root.mainloop()
+
+# Function to predict class (letter) from the image
+def predict_class(model, image_tensor, dataset_choice):
+    """Given a model and an image tensor, predict the class and return the corresponding letter."""
+    with torch.no_grad():
+        output = model(image_tensor)
+    # Get the predicted class index (the class with the max value)
+    _, predicted_class_idx = torch.max(output, 1)
+    
+    # Map the class index to the corresponding letter based on the dataset
+    if dataset_choice == 'EMNIST':
+        predicted_class_letter = EMNIST_CLASSES[predicted_class_idx.item()]
+    else:
+        # For MNIST, there is no need for mapping as it only has digits (0-9)
+        predicted_class_letter = str(predicted_class_idx.item())
+    
+    return predicted_class_letter
 
 if __name__ == "__main__":
     # Take the dataset choice as a command line argument

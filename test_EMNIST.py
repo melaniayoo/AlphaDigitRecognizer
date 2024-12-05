@@ -102,7 +102,7 @@ validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batc
 # Train the model
 
 # Number of times we want to train on the training dataset
-n_epochs = 3
+n_epochs = 10
 
 # List to keep track of cost and accuracy
 cost_list = []

@@ -32,7 +32,7 @@ validation_dataset = dsets.MNIST(root='./data', train=False, download=True, tran
 class CNN_MNIST(nn.Module):
     
     # Contructor
-    def __init__(self, out_1=16, out_2=32):
+    def __init__(self, out_1=16, out_2=32, num_classes=10):
         super(CNN_MNIST, self).__init__()
         # The reason we start with 1 channel is because we have a single black and white image
         # Channel Width after this layer is 16
@@ -88,7 +88,7 @@ validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batc
 # Train the model
 
 # Number of times we want to train on the taining dataset
-n_epochs=3
+n_epochs=10
 # List to keep track of cost and accuracy
 cost_list=[]
 accuracy_list=[]
