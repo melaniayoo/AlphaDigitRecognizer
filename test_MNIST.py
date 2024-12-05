@@ -24,22 +24,6 @@ IMAGE_SIZE = 16
 
 # First the image is resized then converted to a tensor
 composed = transforms.Compose([transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)), transforms.ToTensor()])
-# Load EMNIST dataset
-train_dataset = dsets.EMNIST(
-    root='./data', 
-    split='balanced',  # Use 'balanced' for alphanumeric data
-    train=True, 
-    download=True, 
-    transform=composed
-)
-
-validation_dataset = dsets.EMNIST(
-    root='./data', 
-    split='balanced', 
-    train=False, 
-    download=True, 
-    transform=composed
-)
 
 # MNIST dataset
 train_dataset = dsets.MNIST(root='./data', train=True, download=True, transform=composed)
