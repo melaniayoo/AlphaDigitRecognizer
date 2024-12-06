@@ -17,7 +17,7 @@ Handwriting-Recognition
 |---- run_predictor.py
 |---- test_EMNIST.py
 |---- test_MNIST.py
-
+```
 
 ## Build Instructions
 To detect letters, run:
