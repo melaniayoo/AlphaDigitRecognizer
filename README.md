@@ -8,6 +8,16 @@ This repository accurately converts handwritten text into digital words. Using i
 The flowchart for the project is as follows:
 
 The directory structure meanwhile is:
+```
+Handwriting-Recognition
+|---- Models
+|     |---- emnist_letters_model.pth
+|     |---- mnist_model.pth
+|---- drawing_predictor.py
+|---- run_predictor.py
+|---- test_EMNIST.py
+|---- test_MNIST.py
+
 
 ## Build Instructions
 To detect letters, run:
