@@ -12,10 +12,10 @@ def load_model(dataset_choice):
     if dataset_choice == 'EMNIST':
         # Use the updated EMNIST model if applicable
         model = CNN_EMNIST(out_1=32, out_2=64, num_classes=26)  # Adjusted architecture
-        model_path = 'emnist_letters_model_improved.pth'
+        model_path = 'Models/emnist_letters_model.pth'
     elif dataset_choice == 'MNIST':
         model = CNN_MNIST(out_1=16, out_2=32, num_classes=10)
-        model_path = 'mnist_model.pth'
+        model_path = 'Models/mnist_model.pth'
     else:
         raise ValueError("Invalid dataset choice. Choose either 'EMNIST' or 'MNIST'.")
 
