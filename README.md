@@ -1,5 +1,6 @@
 # Handwriting-Recognition
 The GitHub Repository for the Recognition &amp; Conversion of Handwritten Text into Digital Words.
+
 NOTE: This repository has been mirrored from https://github.com/MehakKhan05/HandwritingRecognition, which was the original space for collaboration.
 
 ## Project Description
